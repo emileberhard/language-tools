@@ -2,7 +2,7 @@ import * as CompilerDOM from '@vue/compiler-dom';
 import type { Code, VueCodeInformation } from '../../types';
 import { codeFeatures } from '../codeFeatures';
 import type { InlayHintInfo } from '../inlayHints';
-import { endOfLine, newLine } from '../utils';
+import { endOfLine, isTsLang, newLine } from '../utils';
 
 export type TemplateCodegenContext = ReturnType<typeof createTemplateCodegenContext>;
 
@@ -340,9 +340,10 @@ export function createTemplateCodegenContext() {
 		return name;
 	}
 
-	function* generateHoistVariables() {
+	function* generateHoistVariables(lang: string) {
 		// trick to avoid TS 4081 (#5186)
 		if (hoistVars.size) {
+			const nonNull = isTsLang(lang) ? '!' : '';
 			yield `var `;
 			let first = true;
 			for (const [originalVar, hoistVar] of hoistVars) {
@@ -350,7 +351,7 @@ export function createTemplateCodegenContext() {
 					yield `, `;
 				}
 				first = false;
-				yield `${hoistVar} = ${originalVar}!`;
+				yield `${hoistVar} = ${originalVar}${nonNull}`;
 			}
 			yield endOfLine;
 		}
