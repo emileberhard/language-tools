@@ -4,7 +4,7 @@ import type { ScriptSetupRanges } from '../../parsers/scriptSetupRanges';
 import type { Code, IRBlock, IRScript, IRScriptSetup, VueCompilerOptions } from '../../types';
 import { codeFeatures } from '../codeFeatures';
 import { names } from '../names';
-import { asType, endOfLine, generateSfcBlockSection, newLine } from '../utils';
+import { asType, endOfLine, generateSfcBlockSection, isTsLang, newLine } from '../utils';
 import { Boundary } from '../utils/boundary';
 import { createScriptCodegenContext, type ScriptCodegenContext } from './context';
 import { generateGeneric, generateMacros, generateScriptSetupImports, generateSetupFunction } from './scriptSetup';
@@ -105,7 +105,7 @@ function* generateWorker(
 
 		// <script setup>
 		yield* generateExportDeclareEqual(scriptSetup, names.export);
-		if (scriptSetup.generic) {
+		if (scriptSetup.generic && isTsLang(options.scriptLang)) {
 			yield* generateGeneric(
 				options,
 				ctx,
@@ -138,7 +138,7 @@ function* generateWorker(
 	else if (scriptSetup && scriptSetupRanges) {
 		yield* generateScriptSetupImports(scriptSetup, scriptSetupRanges);
 
-		if (scriptSetup.generic) {
+		if (scriptSetup.generic && isTsLang(options.scriptLang)) {
 			yield* generateExportDeclareEqual(scriptSetup, names.export);
 			yield* generateGeneric(
 				options,

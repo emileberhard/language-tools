@@ -1,0 +1,7 @@
+{
+	"extends": "../content-mapper/tsconfig.json",
+	"compilerOptions": {
+		"checkJs": true
+	},
+	"include": ["App.vue"]
+}

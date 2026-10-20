@@ -1,6 +1,7 @@
 import * as fs from 'node:fs';
 import * as os from 'node:os';
 import * as path from 'node:path';
+import * as ts from 'typescript';
 import { expect, test } from 'vitest';
 import { closeProject, openProject, transformVue } from '../project';
 import { SpanMapFeature } from '../protocol';
@@ -117,6 +118,42 @@ test('returns a parser-compatible service script extension', () => {
 			content: `<script lang="${lang}">export default {};</script>`,
 		});
 		expect(result.extension).toBe(extension);
+	}
+});
+
+test.each(['js', 'jsx', 'ts', 'tsx'])('generates valid %s template code', lang => {
+	for (
+		const content of [
+			`<script lang="${lang}">export default {};</script><template><slot :value="1" /></template>`,
+			`<script lang="${lang}">export default {};</script>
+<template><!-- @vue-generic {{ id: number }} --><Comp /></template>`,
+			`<script lang="${lang}">export default {};</script>
+<template><Comp v-slot="{ value }: { value: string }">{{ value }}</Comp></template>`,
+			`<script setup lang="${lang}" generic="T">const value = 1;</script><template>{{ value }}</template>`,
+			`<script lang="${lang}">export default {};</script>
+<script setup lang="${lang}" generic="T">const value = 1;</script><template>{{ value }}</template>`,
+			`<script vapor lang="${lang}">const value = 1;</script><template>{{ value }}</template>`,
+		]
+	) {
+		const result = transformVue({
+			fileName: path.resolve(__dirname, `Template.${lang}.vue`),
+			content,
+		});
+		const fileName = `template${result.extension}`;
+		const options = { allowJs: true, noEmit: true, noLib: true, jsx: ts.JsxEmit.Preserve };
+		const host = ts.createCompilerHost(options);
+		host.getSourceFile = name =>
+			name === fileName
+				? ts.createSourceFile(name, result.text, ts.ScriptTarget.Latest, true)
+				: undefined;
+		const program = ts.createProgram([fileName], options, host);
+		expect.soft(
+			program.getSyntacticDiagnostics().map(diagnostic => ({
+				code: diagnostic.code,
+				message: ts.flattenDiagnosticMessageText(diagnostic.messageText, '\n'),
+			})),
+			content,
+		).toEqual([]);
 	}
 });
 

@@ -7,7 +7,7 @@ import { codeFeatures } from '../codeFeatures';
 import { createVBindShorthandInlayHintInfo } from '../inlayHints';
 import { names } from '../names';
 import { generateExportDeclareEqual } from '../script';
-import { endOfLine, generateTypedVar, identifierRE, newLine } from '../utils';
+import { endOfLine, generateTypedVar, identifierRE, isTsLang, newLine } from '../utils';
 import { Boundary } from '../utils/boundary';
 import { generateCamelized } from '../utils/camelized';
 import { generateStringLiteralKey } from '../utils/stringLiteralKey';
@@ -195,11 +195,12 @@ export function* generateComponent(
 	yield `}))${endOfLine}`;
 
 	yield* generateExportDeclareEqual(options.template, vnodeVar, node.loc.start.offset, node.loc.end.offset);
-	yield functionalVar;
 
 	const commentInfo = ctx.getCommentInfo();
 	if (commentInfo.generic) {
 		const { content, offset } = commentInfo.generic;
+		const isTs = isTsLang(options.scriptLang);
+		yield isTs ? functionalVar : `/** @type {typeof ${functionalVar}`;
 		const boundary = yield* Boundary.start(
 			'template',
 			offset,
@@ -210,6 +211,12 @@ export function* generateComponent(
 		yield [content, 'template', offset, codeFeatures.all];
 		yield `>`;
 		yield boundary.end();
+		if (!isTs) {
+			yield `} */ (${functionalVar})`;
+		}
+	}
+	else {
+		yield functionalVar;
 	}
 
 	const shouldInheritAttrs = hasVBindAttrs(options, ctx, node);

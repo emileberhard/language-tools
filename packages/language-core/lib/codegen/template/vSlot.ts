@@ -133,9 +133,9 @@ function* generateSlotParameters(
 	for (const { name, type } of expression.parameters) {
 		if (type) {
 			types.push([
-				ast.text.slice(name.end, type.end),
+				ast.text.slice(type.getStart(ast), type.end),
 				'template',
-				startOffset + name.end,
+				startOffset + type.getStart(ast),
 				codeFeatures.all,
 			]);
 			replaceSourceRange(interpolation, 'template', startOffset + name.end, startOffset + type.end);
@@ -157,9 +157,16 @@ function* generateSlotParameters(
 			exp.loc.end.offset,
 			codeFeatures.verification,
 		);
-		yield `(`;
-		yield* types.flatMap(type => type ? [`_`, type, `, `] : `_, `);
-		yield isTsLang(options.scriptLang) ? `) => [] as any` : `) => /** @type {any} */ ([])`;
+		if (isTsLang(options.scriptLang)) {
+			yield `(`;
+			yield* types.flatMap(type => type ? [`_: `, type, `, `] : `_, `);
+			yield `) => [] as any`;
+		}
+		else {
+			yield `/** @type {(`;
+			yield* types.flatMap((type, i) => [`_${i}: `, type ?? `any`, `, `]);
+			yield `) => any} */ (() => [])`;
+		}
 		yield boundary.end();
 	}
 	yield `)${endOfLine}`;
