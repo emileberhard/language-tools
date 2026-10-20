@@ -43,7 +43,7 @@ declare global {
 			attrs?: any;
 			slots?: (T extends { $slots: infer Slots } ? Slots : {}) & Record<string, unknown>;
 			emit?: T extends { $emit: infer Emit } ? Emit : {};
-			props?: typeof props;
+			props?: (T extends { $props: infer Props } ? Props : {}) & P;
 			expose?: (exposed: T) => void;
 		};
 	};
