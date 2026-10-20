@@ -42,9 +42,9 @@ tsconfig files, the installed Vue version, and Vue language plugins participate
 in cache invalidation.
 
 Each transform selects its virtual extension through the content-mapper
-protocol. JSX-bearing service scripts use `.tsx`; other Vue service scripts
-currently use `.ts`. Plain JavaScript service scripts are temporarily parsed as
-TypeScript because Vue's generated helpers contain TypeScript syntax.
+protocol, following the component's script language: `.ts` or `.tsx` for
+TypeScript, `.js` or `.jsx` for JavaScript. JavaScript service scripts contain
+no TypeScript-only syntax; generated types use JSDoc.
 
 Vue template `@vue-ignore` and `@vue-expect-error` comments are emitted through
 TypeScript content-mapper diagnostic directive mappings.
